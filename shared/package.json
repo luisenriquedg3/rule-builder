@@ -1,0 +1,12 @@
+{
+ "name": "@app/shared",
+  "version": "1.0.0",
+  "description": "",
+   "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "typecheck": "tsc -p ." },
+  "dependencies": { "zod": "^3.25.0" },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
