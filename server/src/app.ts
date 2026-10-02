@@ -17,7 +17,6 @@ export function createApp(db: Db) {
   );
 
   app.onError((err, c) => {
-    // p. ej. JSON malformado: Hono lanza un HTTPException 400
     if (err instanceof HTTPException && err.status === 400) {
       return c.json<ApiErrorBody>({ error: { code: "bad_request", message: "Petición mal formada" } }, 400);
     }

@@ -1,13 +1,45 @@
-import { Link } from "react-router-dom";
+import { useMemo } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { TRIGGER_LABELS, type Rule } from "@app/shared";
 import { useRules, useToggleRule } from "../api/rules";
 import { Switch } from "../components/Switch";
+import { filterRules, type StatusFilter } from "../lib/filterRules";
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
+  { value: "all", label: "Todas" },
+  { value: "active", label: "Activas" },
+  { value: "inactive", label: "Inactivas" },
+];
+
+const parseStatus = (v: string | null): StatusFilter =>
+  v === "active" || v === "inactive" ? v : "all";
 
 export default function RulesListPage() {
   const { data: rules, isPending, isError, error, refetch, isFetching } = useRules();
   const toggle = useToggleRule();
+
+  const [params, setParams] = useSearchParams();
+  const query = params.get("q") ?? "";
+  const status = parseStatus(params.get("status"));
+  const hasFilters = query !== "" || status !== "all";
+
+  const setFilter = (key: "q" | "status", value: string) =>
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (value === "" || value === "all") next.delete(key);
+        else next.set(key, value);
+        return next;
+      },
+      { replace: true }, 
+    );
+
+  const visible = useMemo(
+    () => (rules ? filterRules(rules, { query, status }) : []),
+    [rules, query, status],
+  );
 
   return (
     <section>
@@ -52,16 +84,58 @@ export default function RulesListPage() {
       )}
 
       {rules && rules.length > 0 && (
-        <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
-          {rules.map((rule) => (
-            <RuleRow
-              key={rule.id}
-              rule={rule}
-              pending={toggle.isPending && toggle.variables?.id === rule.id}
-              onToggle={(enabled) => toggle.mutate({ id: rule.id, enabled })}
+        <>
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setFilter("q", e.target.value)}
+              placeholder="Buscar por nombre…"
+              aria-label="Buscar reglas por nombre"
+              className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-2 focus:outline-indigo-600"
             />
-          ))}
-        </ul>
+            <select
+              value={status}
+              onChange={(e) => setFilter("status", e.target.value)}
+              aria-label="Filtrar por estado"
+              className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+            >
+              {STATUS_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <p className="mb-2 text-sm text-slate-500" aria-live="polite">
+            {hasFilters ? `${visible.length} de ${rules.length}` : plural(rules.length, "regla", "reglas")}
+          </p>
+
+          {visible.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-slate-300 p-10 text-center text-slate-500">
+              <p>Ninguna regla coincide con los filtros.</p>
+              <button
+                type="button"
+                onClick={() => setParams({}, { replace: true })}
+                className="mt-2 font-medium text-indigo-600 underline"
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          ) : (
+            <ul className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
+              {visible.map((rule) => (
+                <RuleRow
+                  key={rule.id}
+                  rule={rule}
+                  pending={toggle.isPending && toggle.variables?.id === rule.id}
+                  onToggle={(enabled) => toggle.mutate({ id: rule.id, enabled })}
+                />
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </section>
   );
