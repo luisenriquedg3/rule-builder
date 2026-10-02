@@ -1,5 +1,6 @@
 import { Link, Route, Routes } from "react-router-dom";
 import RulesListPage from "./pages/RulesListPage";
+import RuleEditorPage from "./pages/RuleEditorPage";
 
 export default function App() {
   return (
@@ -14,8 +15,8 @@ export default function App() {
       <main className="mx-auto max-w-4xl px-6 py-8">
         <Routes>
           <Route path="/" element={<RulesListPage />} />
-          <Route path="/rules/new" element={<p>Editor (fase 3)</p>} />
-          <Route path="/rules/:id" element={<p>Editor (fase 3)</p>} />
+          <Route path="/rules/new" element={<RuleEditorPage />} />
+          <Route path="/rules/:id" element={<RuleEditorPage />} />
           <Route path="*" element={<p>Página no encontrada</p>} />
         </Routes>
       </main>

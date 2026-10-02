@@ -42,3 +42,18 @@ export function useToggleRule() {
     onSettled: () => qc.invalidateQueries({ queryKey: ruleKeys.all }),
   });
 }
+export const useRule = (id?: string) =>
+  useQuery<Rule, ApiError>({
+    queryKey: ruleKeys.detail(id ?? ""),
+    queryFn: () => rulesApi.get(id!),
+    enabled: Boolean(id),
+    gcTime: 0, 
+  });
+
+export function useSaveRule(id?: string) {
+  const qc = useQueryClient();
+  return useMutation<Rule, ApiError, RuleInput>({
+    mutationFn: (input) => (id ? rulesApi.update(id, input) : rulesApi.create(input)),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ruleKeys.all }),
+  });
+}
